@@ -71,13 +71,29 @@ class _ProdutosPageState extends State<ProdutosPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _campo(codigo, 'Código', icone: Icons.qr_code),
-                    _campo(nome, 'Nome do produto', icone: Icons.inventory_2),
-                    _campo(categoria, 'Categoria', icone: Icons.category),
+                    _campo(
+                      codigo,
+                      'Código',
+                      icone: Icons.qr_code,
+                      maxLength: 60,
+                    ),
+                    _campo(
+                      nome,
+                      'Nome do produto',
+                      icone: Icons.inventory_2,
+                      maxLength: 120,
+                    ),
+                    _campo(
+                      categoria,
+                      'Categoria',
+                      icone: Icons.category,
+                      maxLength: 80,
+                    ),
                     _campo(
                       unidade,
                       'Unidade (un, cx, pct...)',
                       icone: Icons.straighten,
+                      maxLength: 20,
                     ),
                     _campo(
                       custo,
@@ -334,11 +350,13 @@ Widget _campo(
   String rotulo, {
   required IconData icone,
   bool numerico = false,
+  int? maxLength,
 }) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 12),
     child: TextFormField(
       controller: controller,
+      maxLength: maxLength,
       keyboardType: numerico
           ? const TextInputType.numberWithOptions(decimal: true)
           : TextInputType.text,
