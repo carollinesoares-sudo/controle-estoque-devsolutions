@@ -1,0 +1,168 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function validProduct(data, productId) {
+      return data.keys().hasAll([
+          'id',
+          'codigo',
+          'nome',
+          'categoria',
+          'unidade',
+          'custoUnitario',
+          'estoqueAtual',
+          'estoqueMinimo',
+          'ativo',
+          'lastMovementId',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'codigo',
+          'nome',
+          'categoria',
+          'unidade',
+          'custoUnitario',
+          'estoqueAtual',
+          'estoqueMinimo',
+          'ativo',
+          'lastMovementId',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.id == productId
+        && data.codigo is string
+        && data.codigo.size() > 0
+        && data.codigo.size() <= 60
+        && data.nome is string
+        && data.nome.size() > 0
+        && data.nome.size() <= 120
+        && data.categoria is string
+        && data.categoria.size() > 0
+        && data.categoria.size() <= 80
+        && data.unidade is string
+        && data.unidade.size() > 0
+        && data.unidade.size() <= 20
+        && data.custoUnitario is number
+        && data.custoUnitario >= 0
+        && data.estoqueAtual is number
+        && data.estoqueAtual >= 0
+        && data.estoqueMinimo is number
+        && data.estoqueMinimo >= 0
+        && data.ativo is bool
+        && (data.lastMovementId == null || data.lastMovementId is string)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function hasValidMovementForStockChange(userId, productId) {
+      let movementPath = /databases/$(database)/documents/users/$(userId)/movements/$(request.resource.data.lastMovementId);
+      let movement = getAfter(movementPath).data;
+      return request.resource.data.lastMovementId is string
+        && request.resource.data.lastMovementId != resource.data.lastMovementId
+        && existsAfter(movementPath)
+        && movement.produtoId == productId
+        && movement.criadoPor == request.auth.uid
+        && (
+          (
+            movement.tipo == 'entrada'
+            && request.resource.data.estoqueAtual
+              == resource.data.estoqueAtual + movement.quantidade
+          )
+          || (
+            movement.tipo == 'saida'
+            && movement.quantidade <= resource.data.estoqueAtual
+            && request.resource.data.estoqueAtual
+              == resource.data.estoqueAtual - movement.quantidade
+          )
+        );
+    }
+
+    match /users/{userId}/products/{productId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && validProduct(request.resource.data, productId);
+      allow update: if isOwner(userId)
+        && validProduct(request.resource.data, productId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'codigo',
+          'nome',
+          'categoria',
+          'unidade',
+          'custoUnitario',
+          'estoqueAtual',
+          'estoqueMinimo',
+          'ativo',
+          'lastMovementId',
+          'updatedAt'
+        ])
+        && (
+          (
+            request.resource.data.estoqueAtual == resource.data.estoqueAtual
+            && request.resource.data.lastMovementId == resource.data.lastMovementId
+          )
+          || hasValidMovementForStockChange(userId, productId)
+        );
+      allow delete: if false;
+    }
+
+    match /users/{userId}/productCodes/{codeId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && request.resource.data.keys().hasOnly(['productId'])
+        && request.resource.data.productId is string;
+      allow delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/metadata/{metadataId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && metadataId == 'localJsonImportV1'
+        && request.resource.data.keys().hasOnly(['state', 'updatedAt'])
+        && request.resource.data.state in ['inProgress', 'completed']
+        && request.resource.data.updatedAt is timestamp;
+      allow delete: if false;
+    }
+
+    match /users/{userId}/movements/{movementId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasAll([
+          'id',
+          'produtoId',
+          'tipo',
+          'quantidade',
+          'data',
+          'observacao',
+          'criadoPor',
+          'emailCriador'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'id',
+          'produtoId',
+          'tipo',
+          'quantidade',
+          'data',
+          'observacao',
+          'criadoPor',
+          'emailCriador'
+        ])
+        && request.resource.data.id == movementId
+        && request.resource.data.produtoId is string
+        && request.resource.data.tipo in ['entrada', 'saida']
+        && request.resource.data.quantidade is number
+        && request.resource.data.quantidade > 0
+        && request.resource.data.data is string
+        && request.resource.data.observacao is string
+        && request.resource.data.observacao.size() <= 160
+        && request.resource.data.criadoPor == request.auth.uid
+        && request.resource.data.emailCriador is string;
+      allow update, delete: if false;
+    }
+  }
+}

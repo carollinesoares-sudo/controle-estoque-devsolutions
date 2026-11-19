@@ -1,0 +1,30 @@
+{
+  "firestore": {
+    "database": "default",
+    "rules": "firestore.rules"
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true
+    }
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "almoxarifado-central-20261119",
+          "appId": "1:157992284454:android:7016e3859e89440c9a91e7",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "almoxarifado-central-20261119",
+          "configurations": {
+            "android": "1:157992284454:android:7016e3859e89440c9a91e7"
+          }
+        }
+      }
+    }
+  }
+}

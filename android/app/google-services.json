@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "157992284454",
+    "project_id": "almoxarifado-central-20261119",
+    "storage_bucket": "almoxarifado-central-20261119.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:157992284454:android:7016e3859e89440c9a91e7",
+        "android_client_info": {
+          "package_name": "com.devsolutions.estoque"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCvMA2pgMBh7QQKo4E1MFIS0R813C39eIE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
